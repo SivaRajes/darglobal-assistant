@@ -1,0 +1,12 @@
+[
+  {
+    "name": "DarGlobal",
+    "url": "https://darglobal.co.uk/",
+    "scope": "Public pages within darglobal.co.uk, subject to robots.txt"
+  },
+  {
+    "name": "Wasalt corporate",
+    "url": "https://wasalt.sa/en/corporate",
+    "scope": "Public pages within wasalt.sa, subject to robots.txt"
+  }
+]

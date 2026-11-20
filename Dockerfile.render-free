@@ -1,0 +1,9 @@
+FROM python:3.11-slim
+WORKDIR /app
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 VECTOR_SEARCH_ENABLED=false
+COPY requirements-render-free.txt ./requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+COPY app ./app
+COPY data/knowledge.jsonl data/page_metadata.json ./data/
+EXPOSE 10000
+CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-10000}"]

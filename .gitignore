@@ -1,0 +1,10 @@
+.env
+.env.*
+!.env.example
+__pycache__/
+*.py[cod]
+*.bak
+data/search.sqlite3*
+data/chroma/
+data/model_cache/
+vector_store/

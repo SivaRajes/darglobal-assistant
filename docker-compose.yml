@@ -1,0 +1,21 @@
+services:
+  chatbot:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      HF_HOME: /app/data/model_cache
+      CHROMA_PATH: /app/vector_store
+      VECTOR_INDEX_MAX_CHUNKS: ${VECTOR_INDEX_MAX_CHUNKS:-0}
+      TOKENIZERS_PARALLELISM: "false"
+      OMP_NUM_THREADS: "2"
+      MKL_NUM_THREADS: "2"
+    volumes:
+      - ./data:/app/data
+      - chroma_store:/app/vector_store
+    restart: unless-stopped
+
+volumes:
+  chroma_store:

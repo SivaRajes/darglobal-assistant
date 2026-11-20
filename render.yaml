@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: darglobal-wasalt-assistant
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile.render-free
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: OPENROUTER_MODEL
+        value: google/gemma-4-31b-it:free
+      - key: VECTOR_SEARCH_ENABLED
+        value: "false"
+      - key: APP_NAME
+        value: DarGlobal + Wasalt Assistant

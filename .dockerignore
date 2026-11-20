@@ -1,0 +1,9 @@
+.git
+.env
+__pycache__
+*.pyc
+*.bak
+data/knowledge.jsonl.bak
+data/search.sqlite3
+data/chroma/
+data/model_cache/
