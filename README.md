@@ -11,6 +11,51 @@ A source-grounded chatbot for public information collected from DarGlobal and Wa
 - Sends the retrieved context to **Gemma 4 31B Free** through OpenRouter. The model is pinned; the app does not switch to other models or generate extractive fallback answers. If OpenRouter is unavailable or rate-limited, it shows an error and the retrieved source links.
 - Runs as a Docker container with a browser chat UI and a health endpoint.
 
+## System architecture
+
+The corpus is prepared before deployment and included with the application. At runtime, the app builds its searchable indexes from that corpus. The local Docker profile and the Render Free profile use different retrieval components because Render Free has a much smaller memory budget.
+
+```mermaid
+flowchart TD
+    A[DarGlobal public pages] --> C[Scraper and corpus preparation]
+    B[Wasalt public pages] --> C
+    C --> D[Cleaned, deduplicated, chunked JSONL corpus\nknowledge.jsonl]
+    D --> E[Page metadata\nproject, property, location, source]
+    D --> F[SQLite FTS5 BM25 index]
+    D --> G[Chroma vector index\nlocal Docker profile]
+    E --> H[Intent and metadata-aware ranking]
+    F --> I[Retrieve and rank passages]
+    G --> I
+    H --> I
+    I --> J[Context with source URLs]
+    J --> K[Gemma free model via OpenRouter]
+    K --> L[Grounded answer and source links]
+    L --> M[FastAPI chat UI]
+```
+
+**Render Free profile:** `VECTOR_SEARCH_ENABLED=false`, so it uses SQLite FTS5 BM25 and metadata-aware ranking. It does not run Chroma, dense embeddings, RRF, or the cross-encoder. **Local Docker profile:** uses BM25 plus Chroma dense retrieval, RRF fusion, cross-encoder reranking, and metadata-aware ranking. Both profiles use the same prepared corpus and OpenRouter model configuration.
+
+## Query flow
+
+```mermaid
+flowchart TD
+    A[User asks a question] --> B[Normalize and classify intent]
+    B --> C{Runtime profile}
+    C -->|Render Free| D[SQLite FTS5 BM25 search]
+    C -->|Local Docker| E[BM25 search plus Chroma dense search]
+    E --> F[RRF fusion]
+    F --> G[Cross-encoder reranking]
+    D --> H[Metadata-aware ranking]
+    G --> H
+    H --> I[Build compact context from top passages]
+    I --> J[Request answer from Gemma via OpenRouter]
+    J --> K{Provider returns an answer?}
+    K -->|Yes| L[Show grounded answer and cited source links]
+    K -->|No: rate limit or provider error| M[Show provider error and retrieved source links]
+```
+
+The provider-error path is intentional: the app does not switch models or fabricate a fallback answer. A free OpenRouter model can be rate-limited independently of whether the application and retrieval are healthy.
+
 ## How retrieval and answers work
 
 1. `scrape.py` follows same-domain links and same-domain sitemaps listed by `robots.txt` for the URLs in `data/sources.json`. It observes `robots.txt`, waits one second between pages, caps crawling at 1,500 pages per host, skips account and non-HTML paths, and does not bypass access controls.
